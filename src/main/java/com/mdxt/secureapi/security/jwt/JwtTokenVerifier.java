@@ -74,7 +74,6 @@ public class JwtTokenVerifier extends OncePerRequestFilter{
 			return;
 		}
 		
-		
 //		try {
 			
 			 Authentication authentication = 

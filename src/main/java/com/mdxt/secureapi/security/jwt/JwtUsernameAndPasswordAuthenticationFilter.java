@@ -53,6 +53,8 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 		try {
 			AuthRequest authRequest = new ObjectMapper().readValue(request.getInputStream(), AuthRequest.class);
 			
+			System.out.println("attempting login with username-"+authRequest.getUsername()+", password-"+authRequest.getPassword());
+			
 			Authentication authentication = new UsernamePasswordAuthenticationToken(
 					authRequest.getUsername(), authRequest.getPassword());
 			
