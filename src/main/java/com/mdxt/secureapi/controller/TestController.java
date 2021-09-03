@@ -18,7 +18,7 @@ import com.mdxt.secureapi.entity.TestClass;
 import com.mdxt.secureapi.security.RolesEnum;
 
 @RestController
-@RequestMapping("api/v1/tests")
+@RequestMapping("api/tests")
 public class TestController {
 
 	private static final List<TestClass> students = new ArrayList<>();

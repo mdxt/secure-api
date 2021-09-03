@@ -51,10 +51,16 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
 			.addFilterAfter(new JwtTokenVerifier(jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
 			.authorizeRequests()	//allows restricting access based on URL patterns
 			
-			.antMatchers("/api/v1/tests/public/**")	//matches URLs for public tests
+			.antMatchers("/api/public/**")	//matches URLs for public tests
 				.permitAll()		//allows all URLs matching previous pattern
 			
-			.antMatchers("/api/v1/tests/admin/**")
+			.antMatchers("/api/user/**")
+				.hasRole(RolesEnum.USER.name())
+			
+			.antMatchers("/api/underwriter/**")
+				.hasRole(RolesEnum.UNDERWRITER.name())
+				
+			.antMatchers("/api/admin/**")
 				.hasRole(RolesEnum.ADMIN.name())	//only allows admin role
 			
 			.anyRequest()			//for the URLs not handled by previous steps, 

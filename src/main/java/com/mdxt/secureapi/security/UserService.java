@@ -34,8 +34,6 @@ public class UserService implements UserDetailsService{
 		return UserDetailsImpl.build(user);
 	}
 
-	
-	
 	//Uncomment bean to create a sample user of each category.
 	//Will delete all existing users
 	//@Bean
