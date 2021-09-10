@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,12 +55,48 @@ public class PublicController {
 					.collect(Collectors.toList());
 	}
 	
+//	@GetMapping(path = "policy/{id}")
+//	public LifeInsurancePolicy getPolicyDetails(@PathVariable("id") Long id) {
+//		LifeInsurancePolicy result = lifeInsurancePolicyRepository.findById(id).get();
+//		System.out.println("got policy details- "+result);
+//		return lifeInsurancePolicyRepository.findById(id).get(); //handle errors
+//	}
+	
+	@PostMapping(path = "policy/{id}")
+	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestPolicyList request, @PathVariable("id") Long id) {
+		LifeInsurancePolicy temp = lifeInsurancePolicyRepository.findById(id).get();
+			
+		System.out.println("got request "+request);
+		
+		PolicyWithCost result;
+		
+		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+		
+		result = new PolicyWithCost(temp, calculateCost(temp, request));
+		
+		System.out.println("got policy cost-"+result.getTotalCost()+" for details- "+result);
+		
+		return result;
+	}
+	
+	private boolean isPolicyApplicable(LifeInsurancePolicy policy, RequestPolicyList request) {
+		if(request.getCoverValue() < policy.getMinCoverValue() ||
+			request.getCoverValue() > policy.getMaxCoverValue()) {
+			return false;
+		}
+		if(request.getCoverTillAge() < policy.getMinCoverTillAge() ||
+			request.getCoverTillAge() > policy.getMaxCoverTillAge()) {
+			return false;
+		}
+		return true;
+	}
+	
 	private Double calculateCost(LifeInsurancePolicy policy, RequestPolicyList request) {
 		Double result = 3.14159;
 		return result;
 	}
 	
-	@Bean
+	//@Bean
 	private void createSampleLifeInsurancePolicies() {
 		System.out.println("creating sample Life Insurance Policies");
 		

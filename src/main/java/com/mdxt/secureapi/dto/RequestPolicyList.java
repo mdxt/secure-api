@@ -14,5 +14,5 @@ public class RequestPolicyList {
 	//filters
 	private Long coverValue;
 	private Integer coverTillAge;
-	private Boolean payMonthly;
+	private PaymentPeriodEnum paymentPeriod;
 }
