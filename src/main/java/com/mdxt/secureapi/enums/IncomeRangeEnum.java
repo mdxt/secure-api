@@ -1,4 +1,4 @@
-package com.mdxt.secureapi.dto;
+package com.mdxt.secureapi.enums;
 
 public enum IncomeRangeEnum {
 	ONE_TO_FIVE_LAKH,

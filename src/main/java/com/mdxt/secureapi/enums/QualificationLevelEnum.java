@@ -1,4 +1,4 @@
-package com.mdxt.secureapi.dto;
+package com.mdxt.secureapi.enums;
 
 public enum QualificationLevelEnum {
 	CLASS_10_AND_BELOW,

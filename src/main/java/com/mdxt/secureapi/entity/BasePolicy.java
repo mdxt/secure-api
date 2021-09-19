@@ -1,5 +1,8 @@
 package com.mdxt.secureapi.entity;
 
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -11,6 +14,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class BasePolicy {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
 	private String insurer;
 	private String name;
 	
@@ -25,7 +32,6 @@ public abstract class BasePolicy {
 	
 	@JsonIgnore
 	private Double multiplierCoverValue;
-	
 	
 	//policy cover for x number of people, min x==1
 //	private Integer maxNumberCovered;
