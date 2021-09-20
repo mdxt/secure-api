@@ -5,6 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import com.mdxt.secureapi.enums.ExaminationTypeEnum;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,5 +16,5 @@ import lombok.ToString;
 @Setter
 @ToString
 public class LifeInsurancePolicy extends BasePolicy{
-	
+	private ExaminationTypeEnum examinationType;
 }

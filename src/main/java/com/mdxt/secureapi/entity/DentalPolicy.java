@@ -15,4 +15,5 @@ public class DentalPolicy extends BasePolicy{
 	private Integer maxNumberCovered;
 	private Double multiplierNumberCovered;
 	
+	private Long deductible;
 }

@@ -17,12 +17,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mdxt.secureapi.dto.AbstractFormControl;
 import com.mdxt.secureapi.dto.NumberInputControl;
-import com.mdxt.secureapi.dto.PolicyWithCost;
 import com.mdxt.secureapi.dto.SelectControl;
 import com.mdxt.secureapi.dto.request.RequestDentalPolicyList;
 import com.mdxt.secureapi.dto.request.RequestLifeInsurancePolicyList;
+import com.mdxt.secureapi.dto.response.DentalPolicyPurchaseResponse;
+import com.mdxt.secureapi.dto.response.LifeInsurancePolicyListResponse;
 import com.mdxt.secureapi.entity.BasePolicy;
 import com.mdxt.secureapi.entity.DentalPolicy;
 import com.mdxt.secureapi.entity.LifeInsurancePolicy;
@@ -35,6 +38,8 @@ import com.mdxt.secureapi.repository.LifeInsurancePolicyRepository;
 @RestController
 @RequestMapping("api/public")
 public class PublicController {
+	
+	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);;
 	
 	@Autowired
 	private LifeInsurancePolicyRepository lifeInsurancePolicyRepository;
@@ -88,7 +93,7 @@ public class PublicController {
 	}
 	
 	@PostMapping(path = "policies/LIFE")
-	public List<PolicyWithCost> getLifeInsurancePolicies(@RequestBody RequestLifeInsurancePolicyList request) {
+	public List<LifeInsurancePolicyListResponse> getLifeInsurancePolicies(@RequestBody RequestLifeInsurancePolicyList request) {
 		System.out.println("received policies list request - "+request);
 		
 		List<LifeInsurancePolicy> result = lifeInsurancePolicyRepository
@@ -97,12 +102,16 @@ public class PublicController {
 																	);
 		
 		return result.stream()
-					.map(policy -> new PolicyWithCost(policy, calculateCost(policy, request)))
+					.map(policy -> { 
+						LifeInsurancePolicyListResponse policyWithCost = mapper.convertValue(policy, LifeInsurancePolicyListResponse.class);
+						policyWithCost.setCost(calculateCost(policy, request));
+						return policyWithCost;
+						})
 					.collect(Collectors.toList());
 	}
 	
 	@PostMapping(path = "policies/DENTAL")
-	public List<PolicyWithCost> getDentalPolicies(@RequestBody RequestDentalPolicyList request) {
+	public List<DentalPolicyPurchaseResponse> getDentalPolicies(@RequestBody RequestDentalPolicyList request) {
 		System.out.println("received policies list request - "+request);
 		
 		List<DentalPolicy> result = dentalPolicyRepository
@@ -112,43 +121,47 @@ public class PublicController {
 																	);
 		
 		return result.stream()
-					.map(policy -> new PolicyWithCost(policy, calculateCost(policy, request)))
+					.map(policy -> { 
+							DentalPolicyPurchaseResponse policyWithCost = mapper.convertValue(policy, DentalPolicyPurchaseResponse.class);
+							policyWithCost.setCost(calculateCost(policy, request));
+							return policyWithCost;
+						})
 					.collect(Collectors.toList());
 	}
 	
-	@PostMapping(path = "policy/LIFE/{id}")
-	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
-		LifeInsurancePolicy temp = lifeInsurancePolicyRepository.findById(id).get();
-			
-		System.out.println("got request "+request);
-		
-		PolicyWithCost result;
-		
-		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
-		
-		result = new PolicyWithCost(temp, calculateCost(temp, request));
-		
-		System.out.println("got policy cost-"+result.getTotalCost()+" for details- "+result);
-		
-		return result;
-	}
-	
-	@PostMapping(path = "policy/DENTAL/{id}")
-	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalPolicyList request, @PathVariable("id") Long id) {
-		DentalPolicy temp = dentalPolicyRepository.findById(id).get();
-			
-		System.out.println("got request "+request);
-		
-		PolicyWithCost result;
-		
-		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
-		
-		result = new PolicyWithCost(temp, calculateCost(temp, request));
-		
-		System.out.println("got policy cost-"+result.getTotalCost()+" for details- "+result);
-		
-		return result;
-	}
+//	@PostMapping(path = "policy/LIFE/{id}")
+//	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
+//		LifeInsurancePolicy temp = lifeInsurancePolicyRepository.findById(id).get();
+//			
+//		System.out.println("got request "+request);
+//		
+//		PolicyWithCost result;
+//		
+//		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+//		
+//		result = new PolicyWithCost(temp, calculateCost(temp, request));
+//		
+//		System.out.println("got policy cost-"+result.getTotalCost()+" for details- "+result);
+//		
+//		return result;
+//	}
+//	
+//	@PostMapping(path = "policy/DENTAL/{id}")
+//	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalPolicyList request, @PathVariable("id") Long id) {
+//		DentalPolicy temp = dentalPolicyRepository.findById(id).get();
+//			
+//		System.out.println("got request "+request);
+//		
+//		PolicyWithCost result;
+//		
+//		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+//		
+//		result = new PolicyWithCost(temp, calculateCost(temp, request));
+//		
+//		System.out.println("got policy cost-"+result.getTotalCost()+" for details- "+result);
+//		
+//		return result;
+//	}
 	
 	private boolean isPolicyApplicable(LifeInsurancePolicy policy, RequestLifeInsurancePolicyList request) {
 		if(request.getCoverValue() < policy.getMinCoverValue() ||

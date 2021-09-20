@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,9 @@ import com.mdxt.secureapi.repository.UserRepository;
 @RestController
 @RequestMapping("api/user")
 public class UserController {
+	
+	@Resource
+	
 	
 	@Autowired
 	private UserRepository userRepository;

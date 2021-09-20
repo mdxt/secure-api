@@ -40,6 +40,8 @@ public abstract class BasePolicy {
 	//age till which the policy applies
 	private Integer minCoverTillAge;
 	private Integer maxCoverTillAge;
+	
+	@JsonIgnore
 	private Double multiplierCoverTillAge;
 	
 	private String[] additionalFeatures;
