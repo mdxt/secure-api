@@ -1,8 +1,58 @@
 package com.mdxt.secureapi.dto.response;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
+import com.mdxt.secureapi.entity.DentalPolicyPurchase;
+import com.mdxt.secureapi.enums.ApplicationStateEnum;
+import com.mdxt.secureapi.enums.GenderEnum;
+import com.mdxt.secureapi.enums.PaymentPeriodEnum;
+
 import lombok.Data;
 
 @Data
-public class DentalPolicyPurchaseResponse extends BasePolicyListResponse{
-	private Long deductible;
+public class DentalPolicyPurchaseResponse {
+	
+	private Long id;
+	
+	private GenderEnum gender;
+	
+	private Integer numberCovered;
+	private Integer age;
+	private Integer zipCode;
+	
+	//filters
+	private Long coverValue;
+	private Integer coverPeriod;
+	
+	private PaymentPeriodEnum paymentPeriod;
+	
+	private Long policy_id;
+	
+	private String buyerName;
+	
+	private String address;
+	
+	private Double cost;
+	
+	private ApplicationStateEnum applicationState;
+	
+	private Long user_id;
+	
+	public DentalPolicyPurchaseResponse(DentalPolicyPurchase request) {
+		id = request.getId();
+		gender = request.getGender();
+		age = request.getAge();
+		coverValue = request.getCoverValue();
+		coverPeriod = request.getCoverPeriod();
+		paymentPeriod = request.getPaymentPeriod();
+		policy_id = request.getPolicy().getId();
+		applicationState = request.getApplicationState();
+		buyerName = request.getBuyerName();
+		address = request.getAddress();
+		cost = request.getCost();
+		user_id = request.getUser().getId();
+		numberCovered = request.getNumberCovered();
+		zipCode = request.getZipCode();
+	}
 }

@@ -14,8 +14,8 @@ import com.mdxt.secureapi.entity.LifeInsurancePolicy;
 public interface DentalPolicyRepository extends JpaRepository<DentalPolicy, Long>{
 	
 	@Query("select p from DentalPolicy p where "
-			+ "(:value between p.minCoverValue and p.maxCoverValue) and "
-			+ "(:tillAge between p.minCoverTillAge and p.maxCoverTillAge) and "
+			//+ "(:value in elements(p.coverValues)) and "
+			+ "(:coverPeriod between p.minCoverPeriod and p.maxCoverPeriod) and "
 			+ "(:dependents between p.minNumberCovered and p.maxNumberCovered)")
-	List<DentalPolicy> findAvailablePolicies(@Param("value") Long value, @Param("tillAge") Integer tillAge, @Param("dependents") Integer dependents);
+	List<DentalPolicy> findAvailablePolicies(@Param("coverPeriod") Integer coverPeriod, @Param("dependents") Integer dependents);
 }
