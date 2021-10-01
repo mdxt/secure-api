@@ -51,6 +51,9 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
 			.addFilterAfter(new JwtTokenVerifier(jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
 			.authorizeRequests()	//allows restricting access based on URL patterns
 			
+			.antMatchers("/v2/api-docs/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources")
+				.permitAll()
+			
 			.antMatchers("/api/public/**")	//matches URLs for public tests
 				.permitAll()		//allows all URLs matching previous pattern
 			
@@ -114,7 +117,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 	    CorsConfiguration configuration = new CorsConfiguration();
-	    List<String> allowOrigins = Arrays.asList("*");//http://localhost:4200");
+	    List<String> allowOrigins = Arrays.asList("http://localhost:4200");
 	    List<String> allowAll = Arrays.asList("*");
 	    configuration.setAllowedOriginPatterns(allowOrigins);
 	    configuration.setAllowedMethods(allowAll);

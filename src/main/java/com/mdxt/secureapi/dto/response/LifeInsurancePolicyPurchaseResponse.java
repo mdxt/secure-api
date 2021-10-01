@@ -57,7 +57,9 @@ public class LifeInsurancePolicyPurchaseResponse {
 	
 	private Double cost;
 	
-	private Long user_id;
+	private String username;
+	
+	private String assigned_underwriter;
 	
 	public LifeInsurancePolicyPurchaseResponse(LifeInsurancePolicyPurchase request) {
 		id = request.getId();
@@ -75,6 +77,7 @@ public class LifeInsurancePolicyPurchaseResponse {
 		buyerName = request.getBuyerName();
 		address = request.getAddress();
 		cost = request.getCost();
-		user_id = request.getUser().getId();
+		username = request.getUser().getEmail();
+		assigned_underwriter = (request.getAssignedUnderwriter() != null) ? request.getAssignedUnderwriter().getEmail() : "Not Assigned";
 	}
 }

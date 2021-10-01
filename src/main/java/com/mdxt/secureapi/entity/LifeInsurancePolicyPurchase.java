@@ -27,6 +27,7 @@ public class LifeInsurancePolicyPurchase extends RequestLifeInsurancePolicyList{
 	@JoinColumn(name="policy_id")
 	private LifeInsurancePolicy policy;
 	
+	
 	@OneToOne
 	@JoinColumn(name="user_id")
 	private User user;

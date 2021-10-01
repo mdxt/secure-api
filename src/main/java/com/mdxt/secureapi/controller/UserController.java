@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -68,8 +69,9 @@ public class UserController {
 	}
 	
 	@PostMapping("purchase/LIFE")
-	public ResponseEntity<String> purchase(@RequestBody RequestLifeInsurancePolicyPurchase request, Principal principal){//@RequestBody Map<String, Object> request, Principal principal) {
-
+	public ResponseEntity<String> purchase(@RequestBody @Valid RequestLifeInsurancePolicyPurchase request, Principal principal){//@RequestBody Map<String, Object> request, Principal principal) {
+		System.out.println("\n\n\n purchase request "+request.toString()+"\n\n\n");
+		
 		LifeInsurancePolicyPurchase requestLifeInsurancePolicyPurchase;
 		System.out.println(request.getTobaccoUser()+"purchase LIFE request - "+request.toString());
 		ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -115,7 +117,7 @@ public class UserController {
 	}
 	
 	@PostMapping("purchase/DENTAL")
-	public ResponseEntity<String> purchase(@RequestBody RequestDentalPolicyPurchase request, Principal principal){//@RequestBody Map<String, Object> request, Principal principal) {
+	public ResponseEntity<String> purchase(@RequestBody @Valid RequestDentalPolicyPurchase request, Principal principal){//@RequestBody Map<String, Object> request, Principal principal) {
 
 		DentalPolicyPurchase requestDentalPolicyPurchase;
 		System.out.println("purchase DENTAL request - "+request.toString());

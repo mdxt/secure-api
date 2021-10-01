@@ -2,13 +2,16 @@ package com.mdxt.secureapi.controller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.validation.Valid;
+import javax.validation.Validator;
 
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,24 +33,42 @@ import com.mdxt.secureapi.dto.NumberInputControl;
 import com.mdxt.secureapi.dto.SelectControl;
 import com.mdxt.secureapi.dto.request.RequestDentalPolicyList;
 import com.mdxt.secureapi.dto.request.RequestLifeInsurancePolicyList;
+import com.mdxt.secureapi.dto.request.RequestSignUp;
 import com.mdxt.secureapi.dto.response.DentalPolicyListResponse;
 import com.mdxt.secureapi.dto.response.LifeInsurancePolicyListResponse;
 import com.mdxt.secureapi.dto.response.PolicyWithCost;
 import com.mdxt.secureapi.entity.BasePolicy;
 import com.mdxt.secureapi.entity.DentalPolicy;
 import com.mdxt.secureapi.entity.LifeInsurancePolicy;
+import com.mdxt.secureapi.entity.Role;
 import com.mdxt.secureapi.entity.TestClass;
+import com.mdxt.secureapi.entity.User;
 import com.mdxt.secureapi.enums.ExaminationTypeEnum;
 import com.mdxt.secureapi.enums.GenderEnum;
 import com.mdxt.secureapi.enums.InsuranceTypesEnum;
+import com.mdxt.secureapi.enums.PaymentPeriodEnum;
 import com.mdxt.secureapi.repository.DentalPolicyRepository;
 import com.mdxt.secureapi.repository.LifeInsurancePolicyRepository;
+import com.mdxt.secureapi.repository.RoleRepository;
+import com.mdxt.secureapi.repository.UserRepository;
+import com.mdxt.secureapi.security.AppSecurityConfig;
+import com.mdxt.secureapi.security.RolesEnum;
+import com.mdxt.secureapi.security.UserDetailsImpl;
 
 @RestController
 @RequestMapping("api/public")
 public class PublicController {
 	
-	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);;
+	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	
+	@Autowired
+	private Validator validator;
+	
+	@Autowired
+	private UserRepository userRepository;
+	
+	@Autowired
+	private RoleRepository roleRepository;
 	
 	@Autowired
 	private LifeInsurancePolicyRepository lifeInsurancePolicyRepository;
@@ -144,14 +165,14 @@ public class PublicController {
 	}
 	
 	@PostMapping(path = "policy/LIFE/{id}")
-	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable @Valid RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
+	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
 		LifeInsurancePolicy temp = lifeInsurancePolicyRepository.findById(id).get();
 			
 		System.out.println("got request "+request);
 		
 		PolicyWithCost result;
 		
-		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+		if(request == null || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
 		
 		result = new PolicyWithCost(temp, calculateCost(temp, request));
 		
@@ -159,6 +180,7 @@ public class PublicController {
 		
 		return result;
 	}
+	
 	
 	@PostMapping(path = "policy/DENTAL/{id}")
 	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalPolicyList request, @PathVariable("id") Long id) {
@@ -168,7 +190,7 @@ public class PublicController {
 		
 		PolicyWithCost result;
 		
-		if(request == null || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+		if(request == null  || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
 		
 		result = new PolicyWithCost(temp, calculateCost(temp, request));
 		
@@ -178,6 +200,9 @@ public class PublicController {
 	}
 	
 	private boolean isPolicyApplicable(LifeInsurancePolicy policy, RequestLifeInsurancePolicyList request) {
+		if(request.getAge() >= request.getCoverTillAge()) {
+			return false;
+		}
 		if(request.getCoverValue() < policy.getMinCoverValue() ||
 			request.getCoverValue() > policy.getMaxCoverValue()) {
 			return false;
@@ -205,12 +230,24 @@ public class PublicController {
 	}
 	
 	private Double calculateCost(LifeInsurancePolicy policy, RequestLifeInsurancePolicyList request) {
-		Double result = 3.14159;
+		System.out.println("calc is "+policy.getMultiplierCoverValue() * request.getCoverValue() +
+						policy.getMultiplierCoverTillAge() * (request.getCoverTillAge() - request.getAge()) +
+						(request.getTobaccoUser() ? 10000 : 0));
+		Double result = policy.getMultiplierCoverValue() * request.getCoverValue() +
+						policy.getMultiplierCoverTillAge() * (request.getCoverTillAge() - request.getAge()) +
+						(request.getTobaccoUser() ? 10000 : 0);
+		
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.YEARLY) result /= (request.getCoverTillAge() - request.getAge());
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.MONTHLY) result/=(12*(request.getCoverTillAge() - request.getAge()));
 		return result;
 	}
 	
 	private Double calculateCost(DentalPolicy policy, RequestDentalPolicyList request) {
-		Double result = 2.718;
+		Double result = policy.getMultiplierCoverValue() * request.getCoverValue() *
+						(policy.getMultiplierCoverPeriod() * request.getCoverPeriod()) *
+						(policy.getMultiplierNumberCovered() * request.getNumberCovered());
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.YEARLY) result /= request.getCoverPeriod();
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.MONTHLY) result/=(12*request.getCoverPeriod());
 		return result;
 	}
 	
@@ -258,5 +295,22 @@ public class PublicController {
 		policy.setMultiplierNumberCovered(4.0);
 		policy.setDeductible(10000l);
 		dentalPolicyRepository.saveAndFlush(policy);
+	}
+	
+	@PostMapping(path = "signup")
+	public ResponseEntity<Boolean> signUp(@RequestBody @Valid RequestSignUp request){
+		if(userRepository.existsByEmail(request.getEmail())) return ResponseEntity.ok(false);
+		
+		User user = new User();
+		user.setEmail(request.getEmail());
+		user.setPassword(AppSecurityConfig.passwordEncoder().encode(request.getPassword()));
+		Set<Role> userRoles = new HashSet<Role>();
+		
+		userRoles.add(roleRepository.findByName(RolesEnum.USER).get());
+		user.setRoles(userRoles);
+		
+		userRepository.saveAndFlush(user);
+		
+		return ResponseEntity.ok(true);
 	}
 }

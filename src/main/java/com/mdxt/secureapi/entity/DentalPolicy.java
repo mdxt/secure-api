@@ -20,11 +20,7 @@ public class DentalPolicy extends BasePolicy{
 	@JsonIgnore
 	private Double multiplierCoverValue;
 	
-	//policy cover for x number of people, min x==1
-//	private Integer maxNumberCovered;
-//	private Double multiplierNumberCOvered;
-	
-	//age till which the policy applies
+	//years till which the policy applies
 	private Integer minCoverPeriod;
 	private Integer maxCoverPeriod;
 	

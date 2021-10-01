@@ -3,6 +3,7 @@ package com.mdxt.secureapi.entity;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -39,6 +40,7 @@ public class User {
 	@NotBlank
 	@Size(max = 50)
 	@Email
+	@Column(unique=true)
 	private String email;
 
 	@NotBlank

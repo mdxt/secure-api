@@ -37,7 +37,9 @@ public class DentalPolicyPurchaseResponse {
 	
 	private ApplicationStateEnum applicationState;
 	
-	private Long user_id;
+	private String username;
+	
+	private String assigned_underwriter;
 	
 	public DentalPolicyPurchaseResponse(DentalPolicyPurchase request) {
 		id = request.getId();
@@ -51,8 +53,9 @@ public class DentalPolicyPurchaseResponse {
 		buyerName = request.getBuyerName();
 		address = request.getAddress();
 		cost = request.getCost();
-		user_id = request.getUser().getId();
+		username = request.getUser().getEmail();
 		numberCovered = request.getNumberCovered();
 		zipCode = request.getZipCode();
+		assigned_underwriter = (request.getAssignedUnderwriter() != null) ? request.getAssignedUnderwriter().getEmail() : "Not Assigned";
 	}
 }

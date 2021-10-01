@@ -15,6 +15,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
+<!-- 		<jkube.generator.name>maitreyadixit/insurance-app-repository:secure-api</jkube.generator.name> -->
 	</properties>
 	<dependencies>
 		<dependency>
@@ -70,6 +71,27 @@
 		   <!-- <version>7.0.0.Final</version> -->
 		</dependency> 
 
+<!-- 		<dependency> -->
+<!-- 			  <groupId>org.eclipse.jkube</groupId> -->
+<!-- 			  <artifactId>kubernetes-maven-plugin</artifactId> -->
+<!-- 			  <version>1.4.0</version> -->
+<!-- 			  <type>maven-plugin</type> -->
+<!-- 		</dependency> -->
+
+		<!-- https://mvnrepository.com/artifact/io.springfox/springfox-boot-starter -->
+		<dependency>
+		    <groupId>io.springfox</groupId>
+		    <artifactId>springfox-boot-starter</artifactId>
+		    <version>3.0.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger-ui -->
+		<dependency>
+		    <groupId>io.springfox</groupId>
+		    <artifactId>springfox-swagger-ui</artifactId>
+		    <version>3.0.0</version>
+		</dependency>
+				
+		
 		
 	</dependencies>
 
@@ -86,7 +108,36 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>	
+			<plugin>
+			  <groupId>com.google.cloud.tools</groupId>
+			  <artifactId>jib-maven-plugin</artifactId>
+			  <version>2.8.0</version>
+			  <configuration>
+			    <to>
+			      <image>maitreyadixit/insurance-app-repository</image>
+			    </to>
+			  </configuration>
 			</plugin>
+			
+
+<!-- 			<plugin> -->
+<!-- 			    <groupId>org.eclipse.jkube</groupId> -->
+<!-- 			    <artifactId>kubernetes-maven-plugin</artifactId> -->
+<!-- 			    <version>1.4.0</version> -->
+<!-- 			    <configuration>				 -->
+<!-- 			    	<images> -->
+<!-- 			    		<image> -->
+<!-- 			    			<name>maitreyadixit/insurance-app-repository:secure-api</name> -->
+<!-- 			    			<build> -->
+<!-- 			    				<from>openjdk:11</from> -->
+<!-- 			    				<cmd>java -jar maven/${project.artifactId}-${project.version}.jar</cmd> -->
+<!-- 			    			</build> -->
+<!-- 			    		</image> -->
+<!-- 			    	</images> -->
+<!-- 			    </configuration> -->
+<!-- 			</plugin>	 -->
+			
 		</plugins>
 	</build>
 

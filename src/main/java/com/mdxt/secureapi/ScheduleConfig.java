@@ -7,6 +7,7 @@ import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -37,7 +38,7 @@ public class ScheduleConfig {
 	@Autowired
 	private DentalPolicyPurchaseRepository dentalPolicyPurchaseRepository;
 	
-	@Scheduled(fixedRate = 5 * 60 * 1000)
+	@Scheduled(fixedRate = 20 * 1000)
 	public void scheduleFixedRateTask() throws NoSuchElementException{
 	    System.out.println(
 	      "Fixed rate task - " + System.currentTimeMillis() / 1000);
@@ -49,7 +50,7 @@ public class ScheduleConfig {
 	    	throw new NoSuchElementException("No underwriter users found");
 	    }
 	    
-	    int i = new Random().nextInt(underwriterUsers.length); //TODO: Long?
+	    int i = new Random().nextInt(underwriterUsers.length);//TODO: Long?
 	    
 	    for(LifeInsurancePolicyPurchase policy: lifeInsurancePolicyPurchaseRepository.findByApplicationState(ApplicationStateEnum.SUBMITTED)) { //TODO: change to UNDERWRITER_REVIEW
 	    	policy.setAssignedUnderwriter(underwriterUsers[(i++) % underwriterUsers.length]);
@@ -66,5 +67,8 @@ public class ScheduleConfig {
 	    	dentalPolicyPurchaseRepository.save(policy);
 	    }
 	    dentalPolicyPurchaseRepository.flush();
+	    
+	    
 	}
+	
 }
