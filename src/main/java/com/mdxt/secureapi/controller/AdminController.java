@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -28,16 +29,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mdxt.secureapi.dto.request.RequestCreateDentalAndVision;
 import com.mdxt.secureapi.dto.request.RequestCreateDentalPolicy;
 import com.mdxt.secureapi.dto.request.RequestCreateLifeInsurancePolicy;
+import com.mdxt.secureapi.dto.response.DentalAndVisionPolicyPurchaseResponse;
 import com.mdxt.secureapi.dto.response.DentalPolicyListResponse;
 import com.mdxt.secureapi.dto.response.DentalPolicyPurchaseResponse;
 import com.mdxt.secureapi.dto.response.LifeInsurancePolicyPurchaseResponse;
 import com.mdxt.secureapi.dto.response.UserResponse;
+import com.mdxt.secureapi.entity.DentalAndVisionPolicy;
 import com.mdxt.secureapi.entity.DentalPolicy;
 import com.mdxt.secureapi.entity.LifeInsurancePolicy;
 import com.mdxt.secureapi.entity.LifeInsurancePolicyPurchase;
 import com.mdxt.secureapi.entity.User;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyPurchaseRepository;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyRepository;
 import com.mdxt.secureapi.repository.DentalPolicyPurchaseRepository;
 import com.mdxt.secureapi.repository.DentalPolicyRepository;
 import com.mdxt.secureapi.repository.LifeInsurancePolicyPurchaseRepository;
@@ -46,11 +52,16 @@ import com.mdxt.secureapi.repository.RoleRepository;
 import com.mdxt.secureapi.repository.UserRepository;
 import com.mdxt.secureapi.security.RolesEnum;
 
+import ch.qos.logback.core.Context;
+
 @RestController
 @RequestMapping("api/admin")
 public class AdminController {
 	
 	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	
+	@Value("${application.static-folder-path}")
+	private String staticFolderPath;
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -65,10 +76,16 @@ public class AdminController {
 	private DentalPolicyRepository dentalPolicyRepository;
 	
 	@Autowired
+	private DentalAndVisionPolicyRepository dentalAndVisionPolicyRepository;
+	
+	@Autowired
 	private LifeInsurancePolicyPurchaseRepository lifeInsurancePolicyPurchaseRepository;
 	
 	@Autowired
 	private DentalPolicyPurchaseRepository dentalPolicyPurchaseRepository;
+	
+	@Autowired
+	private DentalAndVisionPolicyPurchaseRepository dentalAndVisionPolicyPurchaseRepository;
 	
 	@GetMapping("checkAccess")
 	public ResponseEntity<Boolean> checkAccess(){
@@ -115,7 +132,7 @@ public class AdminController {
             String fileName = file.getOriginalFilename();
             InputStream is = file.getInputStream();
             
-            String fileLocation = new File("src/main/resources/static").getAbsolutePath() + "/" + fileName;
+            String fileLocation = new File(staticFolderPath).getAbsolutePath() + "/" + fileName;
             
             FileOutputStream output = new FileOutputStream(fileLocation);
 
@@ -197,6 +214,43 @@ public class AdminController {
 		return ResponseEntity.ok("Policy successfully created");
 	}
 	
+	@PostMapping("create/DENTAL_AND_VISION")
+	public ResponseEntity<String> createDentalAndVisionPolicy(@RequestBody @Valid RequestCreateDentalAndVision request){
+		System.out.println(request.toString());
+		
+		try {
+			DentalAndVisionPolicy policy = mapper.convertValue(request, DentalAndVisionPolicy.class);
+			System.out.println(policy.toString()+','+policy.getInsurer()+','+policy.getName()+','+policy.getDocumentPath());
+			
+			policy.setMultiplierCoverValue(request.getMultiplierCoverValue());
+			policy.setMultiplierCoverPeriod(request.getMultiplierCoverPeriod());
+			policy.setMultiplierNumberCovered(request.getMultiplierNumberCovered());
+			
+			List<String> additionalFeatures = new ArrayList<String>();
+			for(String i : request.getAdditionalFeaturesCSV().split(",")) {
+				if(i==null || i.equals("")) continue;
+				additionalFeatures.add(i.trim());
+			}
+			policy.setAdditionalFeatures(additionalFeatures.toArray(new String[0]));
+			
+			List<Long> coverValues = new ArrayList<Long>();
+			for(String i : request.getCoverValuesCSV().split(",")) {
+				coverValues.add(Long.parseLong(i));
+			}
+			policy.setCoverValues(coverValues.toArray(new Long[0]));
+			
+			policy.setDocumentPath("/public/static/"+request.getDocumentPath());
+			System.out.println(policy.toString()+','+policy.getInsurer()+','+policy.getName()+','+policy.getDocumentPath()+','+Arrays.toString(policy.getAdditionalFeatures()));
+			
+			dentalAndVisionPolicyRepository.saveAndFlush(policy);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body("Error creating policy");
+		}
+		return ResponseEntity.ok("Policy successfully created");
+	}
+	
+	
 	@GetMapping("all/LIFE")
 	public ResponseEntity<List<LifeInsurancePolicyPurchaseResponse>> getAllLifeInsurancePolicyPurchases(){
 		return ResponseEntity.ok(lifeInsurancePolicyPurchaseRepository.findAll()
@@ -210,6 +264,14 @@ public class AdminController {
 		return ResponseEntity.ok(dentalPolicyPurchaseRepository.findAll()
 															  .stream()
 															  .map(response -> new DentalPolicyPurchaseResponse(response))
+															  .collect(Collectors.toList()));
+	}
+	
+	@GetMapping("all/DENTAL_AND_VISION")
+	public ResponseEntity<List<DentalAndVisionPolicyPurchaseResponse>> getAllDentalAndVisionInsurancePolicyPurchases(){
+		return ResponseEntity.ok(dentalAndVisionPolicyPurchaseRepository.findAll()
+															  .stream()
+															  .map(response -> new DentalAndVisionPolicyPurchaseResponse(response))
 															  .collect(Collectors.toList()));
 	}
 }

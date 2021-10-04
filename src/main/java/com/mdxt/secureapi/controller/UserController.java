@@ -26,15 +26,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mdxt.secureapi.dto.request.RequestDentalAndVisionPolicyPurchase;
 import com.mdxt.secureapi.dto.request.RequestDentalPolicyPurchase;
 import com.mdxt.secureapi.dto.request.RequestLifeInsurancePolicyList;
 import com.mdxt.secureapi.dto.request.RequestLifeInsurancePolicyPurchase;
+import com.mdxt.secureapi.dto.response.DentalAndVisionPolicyPurchaseResponse;
 import com.mdxt.secureapi.dto.response.DentalPolicyPurchaseResponse;
 import com.mdxt.secureapi.dto.response.LifeInsurancePolicyPurchaseResponse;
+import com.mdxt.secureapi.entity.DentalAndVisionPolicyPurchase;
 import com.mdxt.secureapi.entity.DentalPolicyPurchase;
 import com.mdxt.secureapi.entity.LifeInsurancePolicyPurchase;
 import com.mdxt.secureapi.entity.User;
 import com.mdxt.secureapi.enums.ApplicationStateEnum;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyPurchaseRepository;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyRepository;
 import com.mdxt.secureapi.repository.DentalPolicyPurchaseRepository;
 import com.mdxt.secureapi.repository.DentalPolicyRepository;
 import com.mdxt.secureapi.repository.LifeInsurancePolicyPurchaseRepository;
@@ -45,8 +50,7 @@ import com.mdxt.secureapi.repository.UserRepository;
 @RequestMapping("api/user")
 public class UserController {
 	
-	@Resource
-	
+	ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -62,6 +66,12 @@ public class UserController {
 	
 	@Autowired
 	private DentalPolicyPurchaseRepository dentalPolicyPurchaseRepository;
+	
+	@Autowired
+	private DentalAndVisionPolicyRepository dentalAndVisionPolicyRepository;
+	
+	@Autowired
+	private DentalAndVisionPolicyPurchaseRepository dentalAndVisionPolicyPurchaseRepository;
 
 	@GetMapping("checkAccess")
 	public ResponseEntity<Boolean> checkAccess(){
@@ -74,7 +84,7 @@ public class UserController {
 		
 		LifeInsurancePolicyPurchase requestLifeInsurancePolicyPurchase;
 		System.out.println(request.getTobaccoUser()+"purchase LIFE request - "+request.toString());
-		ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		//ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		try {
 			requestLifeInsurancePolicyPurchase = mapper.convertValue(request, LifeInsurancePolicyPurchase.class);
 			
@@ -98,8 +108,6 @@ public class UserController {
 		return ResponseEntity.ok("Purchase request submitted");
 	}
 	
-	
-	
 	@GetMapping("history/LIFE")
 	public ResponseEntity<List<LifeInsurancePolicyPurchaseResponse>> getOrderHistoryForLife(Principal principal){
 		try {
@@ -121,7 +129,7 @@ public class UserController {
 
 		DentalPolicyPurchase requestDentalPolicyPurchase;
 		System.out.println("purchase DENTAL request - "+request.toString());
-		ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		//ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	
 		try {
 			requestDentalPolicyPurchase = mapper.convertValue(request, DentalPolicyPurchase.class);
@@ -152,6 +160,50 @@ public class UserController {
 			return ResponseEntity.ok(
 						dentalPolicyPurchaseRepository.findByUserId(user.getId()).stream()
 															 .map(policyRequest -> new DentalPolicyPurchaseResponse(policyRequest))
+															 .collect(Collectors.toList())
+					);
+		} catch (NoSuchElementException | NullPointerException e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+	}
+	
+	@PostMapping("purchase/DENTAL_AND_VISION")
+	public ResponseEntity<String> purchase(@RequestBody @Valid RequestDentalAndVisionPolicyPurchase request, Principal principal){//@RequestBody Map<String, Object> request, Principal principal) {
+
+		DentalAndVisionPolicyPurchase requestDentalAndVisionPolicyPurchase;
+		System.out.println("purchase DENTAL_AND_VISION request - "+request.toString());
+		//ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	
+		try {
+			requestDentalAndVisionPolicyPurchase = mapper.convertValue(request, DentalAndVisionPolicyPurchase.class);
+			
+			if(!dentalAndVisionPolicyRepository.existsById(request.getPolicyId())) 
+				return ResponseEntity.badRequest().body("No policy of given policy id");
+			
+			requestDentalAndVisionPolicyPurchase.setPolicy(dentalAndVisionPolicyRepository.getById(request.getPolicyId()));
+			
+			requestDentalAndVisionPolicyPurchase.setApplicationState(ApplicationStateEnum.SUBMITTED);
+			
+			requestDentalAndVisionPolicyPurchase.setUser(userRepository.findByEmail(principal.getName()).orElseThrow(() -> new IllegalArgumentException()));
+			
+			dentalAndVisionPolicyPurchaseRepository.saveAndFlush(requestDentalAndVisionPolicyPurchase);
+		} catch(IllegalArgumentException | ClassCastException e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body("Invalid request data");
+		}
+		
+		return ResponseEntity.ok("Purchase request submitted");
+	}
+	
+	@GetMapping("history/DENTAL_AND_VISION")
+	public ResponseEntity<List<DentalAndVisionPolicyPurchaseResponse>> getOrderHistoryForDentalAndVision(Principal principal){
+		try {
+			User user = userRepository.findByEmail(principal.getName()).get();
+			System.out.println("accessing history of DENTAL_AND_VISION purchases of user "+user.getId()+"/"+user.getEmail());
+			return ResponseEntity.ok(
+						dentalAndVisionPolicyPurchaseRepository.findByUserId(user.getId()).stream()
+															 .map(policyRequest -> new DentalAndVisionPolicyPurchaseResponse(policyRequest))
 															 .collect(Collectors.toList())
 					);
 		} catch (NoSuchElementException | NullPointerException e) {

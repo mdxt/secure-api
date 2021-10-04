@@ -11,11 +11,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import com.mdxt.secureapi.entity.DentalAndVisionPolicyPurchase;
 import com.mdxt.secureapi.entity.DentalPolicyPurchase;
 import com.mdxt.secureapi.entity.LifeInsurancePolicyPurchase;
 import com.mdxt.secureapi.entity.Role;
 import com.mdxt.secureapi.entity.User;
 import com.mdxt.secureapi.enums.ApplicationStateEnum;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyPurchaseRepository;
 import com.mdxt.secureapi.repository.DentalPolicyPurchaseRepository;
 import com.mdxt.secureapi.repository.LifeInsurancePolicyPurchaseRepository;
 import com.mdxt.secureapi.repository.RoleRepository;
@@ -37,6 +39,9 @@ public class ScheduleConfig {
 	
 	@Autowired
 	private DentalPolicyPurchaseRepository dentalPolicyPurchaseRepository;
+	
+	@Autowired
+	private DentalAndVisionPolicyPurchaseRepository dentalAndVisionPolicyPurchaseRepository;
 	
 	@Scheduled(fixedRate = 20 * 1000)
 	public void scheduleFixedRateTask() throws NoSuchElementException{
@@ -68,7 +73,13 @@ public class ScheduleConfig {
 	    }
 	    dentalPolicyPurchaseRepository.flush();
 	    
-	    
+	    for(DentalAndVisionPolicyPurchase policy: dentalAndVisionPolicyPurchaseRepository.findByApplicationState(ApplicationStateEnum.SUBMITTED)) { //TODO: change to UNDERWRITER_REVIEW
+	    	policy.setAssignedUnderwriter(underwriterUsers[(i++) % underwriterUsers.length]);
+	    	policy.setApplicationState(ApplicationStateEnum.UNDERWRITER_REVIEW);
+	    	System.out.println("assigned underwriter to policy "+policy.toString());
+	    	dentalAndVisionPolicyPurchaseRepository.save(policy);
+	    }
+	    dentalPolicyPurchaseRepository.flush();
 	}
 	
 }

@@ -31,13 +31,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mdxt.secureapi.dto.AbstractFormControl;
 import com.mdxt.secureapi.dto.NumberInputControl;
 import com.mdxt.secureapi.dto.SelectControl;
+import com.mdxt.secureapi.dto.request.RequestDentalAndVisionPolicyList;
 import com.mdxt.secureapi.dto.request.RequestDentalPolicyList;
 import com.mdxt.secureapi.dto.request.RequestLifeInsurancePolicyList;
 import com.mdxt.secureapi.dto.request.RequestSignUp;
+import com.mdxt.secureapi.dto.response.DentalAndVisionPolicyListResponse;
 import com.mdxt.secureapi.dto.response.DentalPolicyListResponse;
 import com.mdxt.secureapi.dto.response.LifeInsurancePolicyListResponse;
 import com.mdxt.secureapi.dto.response.PolicyWithCost;
 import com.mdxt.secureapi.entity.BasePolicy;
+import com.mdxt.secureapi.entity.DentalAndVisionPolicy;
 import com.mdxt.secureapi.entity.DentalPolicy;
 import com.mdxt.secureapi.entity.LifeInsurancePolicy;
 import com.mdxt.secureapi.entity.Role;
@@ -45,8 +48,10 @@ import com.mdxt.secureapi.entity.TestClass;
 import com.mdxt.secureapi.entity.User;
 import com.mdxt.secureapi.enums.ExaminationTypeEnum;
 import com.mdxt.secureapi.enums.GenderEnum;
+import com.mdxt.secureapi.enums.IncomeRangeEnum;
 import com.mdxt.secureapi.enums.InsuranceTypesEnum;
 import com.mdxt.secureapi.enums.PaymentPeriodEnum;
+import com.mdxt.secureapi.repository.DentalAndVisionPolicyRepository;
 import com.mdxt.secureapi.repository.DentalPolicyRepository;
 import com.mdxt.secureapi.repository.LifeInsurancePolicyRepository;
 import com.mdxt.secureapi.repository.RoleRepository;
@@ -75,6 +80,9 @@ public class PublicController {
 	
 	@Autowired
 	private DentalPolicyRepository dentalPolicyRepository;
+	
+	@Autowired
+	private DentalAndVisionPolicyRepository dentalAndVisionPolicyRepository;
 	
 	private static final List<TestClass> students = new ArrayList<>();
 	static {
@@ -164,39 +172,81 @@ public class PublicController {
 					.collect(Collectors.toList());
 	}
 	
+	@PostMapping(path = "policies/DENTAL_AND_VISION")
+	public List<DentalAndVisionPolicyListResponse> getDentalAndVisionPolicies(@RequestBody RequestDentalAndVisionPolicyList request) {
+		System.out.println("received policies list request - "+request);
+		
+		List<DentalAndVisionPolicy> result = dentalAndVisionPolicyRepository
+											.findAvailablePolicies(
+																	request.getCoverPeriod(),
+																	request.getNumberCovered()
+																	)
+											.stream()
+											.filter(dentalAndVisionPolicy -> Arrays.asList(dentalAndVisionPolicy.getCoverValues()).contains(request.getCoverValue()))
+											.collect(Collectors.toList());
+		
+		return result.stream()
+					.map(policy -> { 
+							DentalAndVisionPolicyListResponse policyWithCost = mapper.convertValue(policy, DentalAndVisionPolicyListResponse.class);
+							policyWithCost.setCost(calculateCost(policy, request));
+							return policyWithCost;
+						})
+					.collect(Collectors.toList());
+	}
+	
 	@PostMapping(path = "policy/LIFE/{id}")
-	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
+	public ResponseEntity<PolicyWithCost> getPolicyDetailsWithCost(@RequestBody @Nullable RequestLifeInsurancePolicyList request, @PathVariable("id") Long id) {
+		if(!lifeInsurancePolicyRepository.existsById(id)) return ResponseEntity.badRequest().body(null);
 		LifeInsurancePolicy temp = lifeInsurancePolicyRepository.findById(id).get();
 			
 		System.out.println("got request "+request);
 		
 		PolicyWithCost result;
 		
-		if(request == null || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+		if(request == null || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return ResponseEntity.ok(new PolicyWithCost(temp, -1.0));
 		
 		result = new PolicyWithCost(temp, calculateCost(temp, request));
 		
 		System.out.println("got policy cost-"+result.getCost()+" for details- "+result);
 		
-		return result;
+		return ResponseEntity.ok(result);
 	}
 	
 	
 	@PostMapping(path = "policy/DENTAL/{id}")
-	public PolicyWithCost getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalPolicyList request, @PathVariable("id") Long id) {
+	public ResponseEntity<PolicyWithCost> getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalPolicyList request, @PathVariable("id") Long id) {
+		if(!dentalPolicyRepository.existsById(id)) return ResponseEntity.badRequest().body(null);
 		DentalPolicy temp = dentalPolicyRepository.findById(id).get();
 			
 		System.out.println("got request "+request);
 		
 		PolicyWithCost result;
 		
-		if(request == null  || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return new PolicyWithCost(temp, -1.0);
+		if(request == null  || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return ResponseEntity.ok(new PolicyWithCost(temp, -1.0));
 		
 		result = new PolicyWithCost(temp, calculateCost(temp, request));
 		
 		System.out.println("got policy cost-"+result.getCost()+" for details- "+result);
 		
-		return result;
+		return ResponseEntity.ok(result);
+	}
+	
+	@PostMapping(path = "policy/DENTAL_AND_VISION/{id}")
+	public ResponseEntity<PolicyWithCost> getPolicyDetailsWithCost(@RequestBody @Nullable RequestDentalAndVisionPolicyList request, @PathVariable("id") Long id) {
+		if(!dentalAndVisionPolicyRepository.existsById(id)) return ResponseEntity.badRequest().body(null);
+		DentalAndVisionPolicy temp = dentalAndVisionPolicyRepository.findById(id).get();
+			
+		System.out.println("got request "+request);
+		
+		PolicyWithCost result;
+		
+		if(request == null  || !validator.validate(request).isEmpty() || !isPolicyApplicable(temp, request)) return ResponseEntity.ok(new PolicyWithCost(temp, -1.0));
+		
+		result = new PolicyWithCost(temp, calculateCost(temp, request));
+		
+		System.out.println("got policy cost-"+result.getCost()+" for details- "+result);
+		
+		return ResponseEntity.ok(result);
 	}
 	
 	private boolean isPolicyApplicable(LifeInsurancePolicy policy, RequestLifeInsurancePolicyList request) {
@@ -229,13 +279,29 @@ public class PublicController {
 		return true;
 	}
 	
+	private boolean isPolicyApplicable(DentalAndVisionPolicy policy, RequestDentalAndVisionPolicyList request) {
+		if(Arrays.binarySearch(policy.getCoverValues(), request.getCoverValue())<0) {
+			return false;
+		}
+		if(request.getCoverPeriod() < policy.getMinCoverPeriod() ||
+			request.getCoverPeriod() > policy.getMaxCoverPeriod()) {
+			return false;
+		}
+		if(request.getNumberCovered() < policy.getMinNumberCovered() ||
+			request.getNumberCovered() > policy.getMaxNumberCovered()) {
+			return false;
+		}
+		return true;
+	}
+	
 	private Double calculateCost(LifeInsurancePolicy policy, RequestLifeInsurancePolicyList request) {
 		System.out.println("calc is "+policy.getMultiplierCoverValue() * request.getCoverValue() +
 						policy.getMultiplierCoverTillAge() * (request.getCoverTillAge() - request.getAge()) +
 						(request.getTobaccoUser() ? 10000 : 0));
 		Double result = policy.getMultiplierCoverValue() * request.getCoverValue() +
 						policy.getMultiplierCoverTillAge() * (request.getCoverTillAge() - request.getAge()) +
-						(request.getTobaccoUser() ? 10000 : 0);
+						(request.getTobaccoUser() ? 10000 : 0) +
+						(request.getIncomeRange() == IncomeRangeEnum.ONE_TO_FIVE_LAKH ? 0 : 10000);
 		
 		if(request.getPaymentPeriod() == PaymentPeriodEnum.YEARLY) result /= (request.getCoverTillAge() - request.getAge());
 		if(request.getPaymentPeriod() == PaymentPeriodEnum.MONTHLY) result/=(12*(request.getCoverTillAge() - request.getAge()));
@@ -243,6 +309,15 @@ public class PublicController {
 	}
 	
 	private Double calculateCost(DentalPolicy policy, RequestDentalPolicyList request) {
+		Double result = policy.getMultiplierCoverValue() * request.getCoverValue() *
+						(policy.getMultiplierCoverPeriod() * request.getCoverPeriod()) *
+						(policy.getMultiplierNumberCovered() * request.getNumberCovered());
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.YEARLY) result /= request.getCoverPeriod();
+		if(request.getPaymentPeriod() == PaymentPeriodEnum.MONTHLY) result/=(12*request.getCoverPeriod());
+		return result;
+	}
+	
+	private Double calculateCost(DentalAndVisionPolicy policy, RequestDentalAndVisionPolicyList request) {
 		Double result = policy.getMultiplierCoverValue() * request.getCoverValue() *
 						(policy.getMultiplierCoverPeriod() * request.getCoverPeriod()) *
 						(policy.getMultiplierNumberCovered() * request.getNumberCovered());

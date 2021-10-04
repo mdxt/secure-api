@@ -3,7 +3,7 @@ package com.mdxt.secureapi.dto.response;
 import lombok.Data;
 
 @Data
-public class DentalPolicyListResponse extends BasePolicyListResponse{
+public class DentalAndVisionPolicyListResponse extends BasePolicyListResponse{
 	private Long[] coverValues;
 	
 	private Integer minCoverPeriod;
@@ -12,4 +12,5 @@ public class DentalPolicyListResponse extends BasePolicyListResponse{
 	private Integer minNumberCovered;
 	private Integer maxNumberCovered;
 	private Long deductible;
+	private Boolean coversEyeglassFrames;
 }
