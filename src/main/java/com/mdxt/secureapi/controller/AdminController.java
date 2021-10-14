@@ -201,7 +201,9 @@ public class AdminController {
 			for(String i : request.getCoverValuesCSV().split(",")) {
 				coverValues.add(Long.parseLong(i));
 			}
-			policy.setCoverValues(coverValues.toArray(new Long[0]));
+			Long[] finalCoverValues = coverValues.toArray(new Long[0]);
+			Arrays.sort(finalCoverValues);
+			policy.setCoverValues(finalCoverValues);
 			
 			policy.setDocumentPath("/public/static/"+request.getDocumentPath());
 			System.out.println(policy.toString()+','+policy.getInsurer()+','+policy.getName()+','+policy.getDocumentPath()+','+Arrays.toString(policy.getAdditionalFeatures()));
@@ -237,7 +239,9 @@ public class AdminController {
 			for(String i : request.getCoverValuesCSV().split(",")) {
 				coverValues.add(Long.parseLong(i));
 			}
-			policy.setCoverValues(coverValues.toArray(new Long[0]));
+			Long[] finalCoverValues = coverValues.toArray(new Long[0]);
+			Arrays.sort(finalCoverValues);
+			policy.setCoverValues(finalCoverValues);
 			
 			policy.setDocumentPath("/public/static/"+request.getDocumentPath());
 			System.out.println(policy.toString()+','+policy.getInsurer()+','+policy.getName()+','+policy.getDocumentPath()+','+Arrays.toString(policy.getAdditionalFeatures()));

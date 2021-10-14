@@ -119,7 +119,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter{
 	    CorsConfiguration configuration = new CorsConfiguration();
 	    List<String> allowOrigins = Arrays.asList("http://localhost:4200");
 	    List<String> allowAll = Arrays.asList("*");
-	    configuration.setAllowedOriginPatterns(allowOrigins);
+	    configuration.setAllowedOriginPatterns(allowAll);
 	    configuration.setAllowedMethods(allowAll);
 	    configuration.setAllowedHeaders(allowAll);
 	    //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
